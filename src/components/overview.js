@@ -1,6 +1,6 @@
 import React from "react";
 import OverviewItem from "./overviewItem";
-import data from "../data/data.json";
+import data from "../data/new.json";
 
 function Overview() {
   return (

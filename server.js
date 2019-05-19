@@ -7,7 +7,8 @@ const { climateData } = require("./src/data/foodClimate.js");
 const fs = require("fs");
 const port = process.env.PORT || 5000;
 var stringSimilarity = require("string-similarity");
-let dude = "fuck";
+console.log("MÄT", stringSimilarity.compareTwoStrings("havskräfta", "havskräftor"));
+console.log("MÄTVINN", stringSimilarity.compareTwoStrings("havskräfta", "apelsinjuice konc"));
 const transformData = () => {
   let allData = [];
   let realData = {};
@@ -42,77 +43,97 @@ const transformData = () => {
     allData.push(data);
   });
   // console.log("climateData", climateData);
-  const a = Object.entries(
+  const climateDataEntries = Object.entries(
     climateData["Öppna listan – ett utdrag från RISE klimatdatabas för livsmedel v 1.5"]
   );
-  allData.map(item =>
-    a.map(i =>
-      Object.keys(i[1]).map(name => {
-        const seasonalName = Object.keys(item)[0]
+  allData.map(seasonItem =>
+    climateDataEntries.map(climateEntry =>
+      Object.keys(climateEntry[1]).map(name => {
+        const seasonalName = Object.keys(seasonItem)[0]
           .toLowerCase()
           .replace("sallat", "sallad");
         const climateName = name.toLowerCase();
-        const climateCategory = i[0].toLowerCase();
-        const seasonalCategory = item[Object.keys(item)[0]].category.toLowerCase();
+        const climateCategory = climateEntry[0].toLowerCase();
         const similarity = stringSimilarity.compareTwoStrings(climateName, seasonalName);
         const similarityLength =
           seasonalName.length > climateName.length * 2.4 ||
           climateName.length > seasonalName.length * 2.4;
         const includingName =
           climateName.includes(seasonalName) || seasonalName.includes(climateName);
-        const similarityCategory = stringSimilarity.compareTwoStrings(
-          seasonalCategory,
-          climateCategory
-        );
         if (similarityLength && includingName && similarity > 0.4) {
-          realData[seasonalName] = { ...item[seasonalName], ...i[1][climateName] };
-        } else if (!item[climateName] && !realData[climateName]) {
-          realData[climateName] = { ...i[1][climateName], category: climateCategory };
+          realData[seasonalName] = { ...seasonItem[seasonalName], ...climateEntry[1][climateName] };
+        } else if (!seasonItem[climateName] && !realData[climateName]) {
+          realData[climateName] = { ...climateEntry[1][climateName], category: climateCategory };
         }
       })
     )
   );
   return realData;
 };
-const similarCategories = [
-  ["potatis", "rotsaker", "rovor"],
-  "fisk",
-  "frukt",
-  "kryddväxter",
-  "frukt och grönt",
-  "bladgrönsaker"
-];
-// const allOfTheData = {test: 'transformData()'};
-// const allOfTheData = transformData();
+
 const readLargeFile = async currentData => {
   const currentDataInEntries = Object.entries(currentData);
   var dataToReturn = currentData;
   if (!currentData || currentData.length === 0) return;
   const data = await fs.readFileSync("./src/data/foodNutrition.json", "utf8");
   var obj = JSON.parse(data);
+  let alreadySet = [];
   await obj.Livsmedel.forEach(item => {
-    const newNaringsVarde = item.Naringsvarden.Naringsvarde.filter(item => item.Varde !== "0")
-      .filter(item => item.Varde !== "0,0")
-      .filter(item => item.Varde !== "0,00")
-      .filter(item => item.Varde !== "0,000");
-    currentDataInEntries.forEach(existingName => {
-      const currentName = existingName[0];
+    const newNaringsVarde = item.Naringsvarden.Naringsvarde.filter(item => {
+      const stringToInt = parseInt(item.Varde.replace(",", ""));
+      return stringToInt > 0;
+    });
+
+    newNaringsVarde.map(item => item.Varde);
+    currentDataInEntries.forEach(currentEntryData => {
+      const currentName = currentEntryData[0];
       const newName = item.Namn.toLowerCase();
       const similar = stringSimilarity.compareTwoStrings(newName, currentName);
-      if (similar > 0.6) {
+      const gotNaringsvardeArray =
+        dataToReturn[currentName].livsmedelsdata &&
+        dataToReturn[currentName].livsmedelsdata.Naringsvarden &&
+        dataToReturn[currentName].livsmedelsdata.Naringsvarden.Naringsvarde;
+      const firstName = newName.split(" ")[0];
+      const oldDataOrEmptyString = dataToReturn[currentName].livsmedelsdata
+        ? dataToReturn[currentName].livsmedelsdata.Namn.toLowerCase()
+        : " ";
+      const lastComparison = stringSimilarity.compareTwoStrings(oldDataOrEmptyString, currentName);
+      const currentComparison = stringSimilarity.compareTwoStrings(newName, currentName);
+      const firstNameComparison = stringSimilarity.compareTwoStrings(firstName, currentName);
+      const nameEquals = newName === currentName.toLowerCase();
+      const firstNameEquals = firstName === currentName.toLowerCase();
+      if (nameEquals) {
+        alreadySet.push(currentName);
         dataToReturn[currentName] = {
           ...currentData[currentName],
           livsmedelsdata: item
         };
-        if (dataToReturn[currentName].Naringsvarden)
-          dataToReturn[currentName].Naringsvarden.Naringsvarde = newNaringsVarde;
+        if (gotNaringsvardeArray)
+          dataToReturn[currentName].livsmedelsdata.Naringsvarden.Naringsvarde = newNaringsVarde;
+      } else if (!nameEquals && firstNameEquals) {
+        dataToReturn[currentName] = {
+          ...currentData[currentName],
+          livsmedelsdata: item
+        };
+        if (gotNaringsvardeArray)
+          dataToReturn[currentName].livsmedelsdata.Naringsvarden.Naringsvarde = newNaringsVarde;
+      } else if (
+        currentComparison >= firstNameComparison &&
+        currentComparison > lastComparison &&
+        similar > 0.5
+      ) {
+        dataToReturn[currentName] = {
+          ...currentData[currentName],
+          livsmedelsdata: item
+        };
+        if (gotNaringsvardeArray)
+          dataToReturn[currentName].livsmedelsdata.Naringsvarden.Naringsvarde = newNaringsVarde;
       } else return null;
     });
   });
   return dataToReturn;
 };
 const scraper = async currentData => {
-  // innan var det transformData() i entries
   const fullData = Object.entries(currentData);
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
@@ -122,7 +143,6 @@ const scraper = async currentData => {
       const name = await fullData[e][0];
       console.log(name);
       await page.goto(`http://xn--ssongsmat-v2a.nu/ssm/${name}`);
-      // const bodyHandle = await page.$("body");
       const miljöpåverkan = await page.evaluate(name => {
         const wrapper = document.querySelector(".mw-content-ltr");
         const miljöpåverkan = Object.values(wrapper.getElementsByTagName("h2")).map(
@@ -160,13 +180,6 @@ const scraper = async currentData => {
       });
       const content = { bild, miljöpåverkan, beskrivning, referenser };
       newObj[name] = { ...newObj[name], content };
-      // .replace(/<\/?[^>]+(>|$)/g, ""));
-      // Object.values(wrapper.getElementsByTagName("p"))
-      //   .map(text => text.textContent.replace("\n", ""))
-      //   .join("<br />");
-      // const bild = wrapper.getElementsByTagName("img");
-      // const beskrivning = document.querySelector(".aside").innerHTML.nextElementSibling;
-      // await bodyHandle.dispose();
     }
     await browser.close();
   } catch (error) {
@@ -178,13 +191,13 @@ const scraper = async currentData => {
 
 const writeData = async () => {
   const dataFromSet = await transformData();
+  console.log(dataFromSet);
   const updatedData = await readLargeFile(dataFromSet);
   const finalizedData = await scraper(updatedData);
-  fs.writeFile("newData.json", JSON.stringify(finalizedData), err => console.log(err));
+  // fs.writeFile("newData.json", JSON.stringify(finalizedData), err => console.log(err));
 };
 writeData();
-// const everything = hehehe();
-// hehehe();
+
 app.use(express.static(path.join(__dirname, "/build")));
 
 //production mode

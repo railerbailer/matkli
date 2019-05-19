@@ -1,9 +1,9 @@
 import React from "react";
-import data from "../data/data.json";
+import data from "../data/new.json";
 
 function ItemDescription(props) {
   const param = props.match.params.foodName;
-  const { content, category, season, generell } = data[param];
+  const { content, category, season, generell, livsmedelsdata } = data[param];
   const { bild, referenser, beskrivning } = content;
   const title = param;
   const footprint =
@@ -27,9 +27,8 @@ function ItemDescription(props) {
       const seasonValues = Object.entries(theSeason);
       const monthAndStrength = seasonValues[0];
       const seasonColor = { weak: "red", strong: "green", medium: "yellow" };
-      console.log(seasonValues);
       return (
-        <div className="description-season">
+        <div key={monthAndStrength[0]} className="description-season">
           <div
             style={{ color: seasonColor[monthAndStrength[1]] }}
             className="description-season-monthAndStrength"
@@ -39,9 +38,26 @@ function ItemDescription(props) {
         </div>
       );
     });
+  livsmedelsdata && console.log(livsmedelsdata.Namn);
+  const nutrition =
+    livsmedelsdata &&
+    livsmedelsdata.Naringsvarden.Naringsvarde.map(item => {
+      const { Namn, Varde, Enhet } = item;
+
+      return (
+        <div key={Namn} className="description-nutrition">
+          <div>{Namn}: </div>
+          <div>
+            {Varde}
+            {Enhet}
+          </div>
+        </div>
+      );
+    });
   return (
     <article className="description">
       <button onClick={() => props.history.goBack()}>Back</button>
+      {nutrition}
       <h1 className="description-title">{title}</h1>
       <h2 className="description-category">{category}</h2>
       {footprint}

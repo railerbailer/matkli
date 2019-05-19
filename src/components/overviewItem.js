@@ -4,9 +4,9 @@ function OverviewItem({ foods }) {
   return Object.entries(foods).map(item => {
     const title = item[0];
     const data = item[1];
-    if (!data.content.bild) {
-      console.log(title);
-    }
+    // if (!data.content.bild) {
+    //   console.log(title);
+    // }
     return (
       <div key={title} className="overview-item">
         <Link to={`/${title}`}>

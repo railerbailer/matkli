@@ -9,7 +9,7 @@
 const climateData = {
   "Öppna listan – ett utdrag från RISE klimatdatabas för livsmedel v 1.5": {
     protein: {
-      nötkött: {
+      "nöt kött rå": {
         generell: {
           sverige: {
             footprint: 27,
@@ -37,7 +37,7 @@ const climateData = {
           }
         }
       },
-      kyckling: {
+      höna: {
         generell: {
           sverige: {
             footprint: "2,4",
@@ -177,7 +177,7 @@ const climateData = {
           }
         }
       },
-      "mjukt bröd": {
+      "vitt bröd": {
         generell: {
           sverige: {
             description: "vete",
@@ -186,7 +186,7 @@ const climateData = {
           }
         }
       },
-      rågknäckebröd: {
+      "knäcke bröd": {
         generell: {
           sverige: {
             footprint: "0,3",
@@ -213,7 +213,7 @@ const climateData = {
           }
         }
       },
-      grädde: {
+      vispgrädde: {
         generell: {
           sverige: {
             description: "40% fett",
@@ -259,7 +259,7 @@ const climateData = {
           }
         }
       },
-      banan: {
+      bananer: {
         generell: {
           "costa rica": {
             description: "med skal",
@@ -294,7 +294,7 @@ const climateData = {
           }
         }
       },
-      "gröna ärtor": {
+      "gröna ärter": {
         generell: {
           sverige: {
             footprint: "0,3",
@@ -363,7 +363,7 @@ const climateData = {
           }
         }
       },
-      chocklad: {
+      choklad: {
         generell: {
           "Sverige/Ghana": {
             description: "mörk",
