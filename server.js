@@ -38,7 +38,6 @@ const transformData = () => {
       });
     }
   });
-  console.log(realData);
   return realData;
 };
 
@@ -204,12 +203,12 @@ const writeData = async () => {
   const dataFromSet = await transformData();
   const climateData = await addClimateData(dataFromSet);
   const updatedData = await readLargeFile(climateData);
-  let keke = [];
-  Object.entries(updatedData).map(item => {
-    if (item[1].livsmedelsdata && !keke.includes(item[1].livsmedelsdata.Huvudgrupp))
-      keke.push(item[1].livsmedelsdata.Huvudgrupp);
-  });
-  console.log(keke);
+  // let keke = [];
+  // Object.entries(updatedData).map(item => {
+  //   if (item[1].livsmedelsdata && !keke.includes(item[1].livsmedelsdata.Huvudgrupp))
+  //     keke.push(item[1].livsmedelsdata.Huvudgrupp);
+  // });
+  // console.log(keke);
   // let ke = 0;
   // Object.entries(updatedData).map(item => {
   //   if (item[1].generell) {
